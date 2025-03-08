@@ -1,57 +1,47 @@
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 BLE</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        button { font-size: 20px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>ESP32 BLE</h1>
+    <button onclick="connectBLE()">Se connecter</button>
+    <p id="status">Statut: Déconnecté</p>
+    <p id="gpioValue">Valeur GPIO: --</p>
 
-#define NORD 17
-#define SUD 18
-#define EST 39
-#define OUEST 40
+    <script>
+        let bleDevice, bleCharacteristic;
 
-BLEServer *pServer = nullptr;
-BLECharacteristic *pCharacteristic = nullptr;
-bool deviceConnected = false;
+        async function connectBLE() {
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['180A']
+                });
 
-void setup() {
-    Serial.begin(115200);
-    BLEDevice::init("ESP32-S3-BLE");
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService('180A');
+                bleCharacteristic = await service.getCharacteristic('2A56');
 
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new class : public BLEServerCallbacks {
-        void onConnect(BLEServer* pServer) override { deviceConnected = true; }
-        void onDisconnect(BLEServer* pServer) override { deviceConnected = false; }
-    });
+                document.getElementById("status").textContent = "Statut: Connecté";
+                bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+                await bleCharacteristic.startNotifications();
+            } catch (error) {
+                console.error(error);
+                alert("Échec de connexion BLE !");
+            }
+        }
 
-    BLEService *pService = pServer->createService(BLEUUID((uint16_t)0x180C));
-    pCharacteristic = pService->createCharacteristic(
-        BLEUUID((uint16_t)0x2A56),
-        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
-    );
-
-    pCharacteristic->addDescriptor(new BLE2902());
-    pService->start();
-    pServer->getAdvertising()->start();
-
-    pinMode(NORD, INPUT);
-    pinMode(SUD, INPUT);
-    pinMode(EST, INPUT);
-    pinMode(OUEST, INPUT);
-}
-
-void loop() {
-    if (deviceConnected) {
-        int nordVal = analogRead(NORD);
-        int sudVal = analogRead(SUD);
-        int estVal = analogRead(EST);
-        int ouestVal = analogRead(OUEST);
-
-        String data = "Nord: " + String(nordVal) + ", Sud: " + String(sudVal) +
-                      ", Est: " + String(estVal) + ", Ouest: " + String(ouestVal);
-
-        Serial.println(data);
-        pCharacteristic->setValue(data.c_str());
-        pCharacteristic->notify();
-    }
-    delay(1000);
-}
+        function handleNotification(event) {
+            let value = new TextDecoder().decode(event.target.value);
+            document.getElementById("gpioValue").textContent = "Valeur GPIO: " + value;
+        }
+    </script>
+</body>
+</html>
 
