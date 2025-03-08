@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 BLE</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        button { font-size: 20px; padding: 10px; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h1>ESP32 BLE</h1>
+    <button onclick="connectBLE()">Se connecter</button>
+    <p id="status">Statut: Déconnecté</p>
+    <p id="gpioValue">Valeur GPIO: --</p>
+
+    <script>
+        let bleDevice, bleCharacteristic;
+        const SERVICE_UUID = '180A';  // UUID du service
+        const CHARACTERISTIC_UUID = '2A56'; // UUID de la caractéristique
+
+        async function connectBLE() {
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID] }]
+                });
+
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                document.getElementById("status").textContent = "Statut: Connecté";
+
+                bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+                await bleCharacteristic.startNotifications();
+            } catch (error) {
+                console.error(error);
+                alert("Échec de connexion BLE !");
+            }
+        }
+
+        function handleNotification(event) {
+            let value = new TextDecoder().decode(event.target.value);
+            document.getElementById("gpioValue").textContent = "Valeur GPIO: " + value;
+        }
+    </script>
+</body>
+</html>
+
+
