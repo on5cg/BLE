@@ -3,7 +3,10 @@
 <body>
   <h1>ESP32 Analog Reader</h1>
   <button onclick="connectBLE()">Connexion BLE</button>
-  <p id="value">Valeur: 0</p>
+  <p id="value1">Valeur1: 0</p>
+  <p id="value2">Valeur2: 0</p>
+  <p id="value3">Valeur3: 0</p>
+  <p id="value4">Valeur4: 0</p>
 
 <script>
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -38,8 +41,17 @@ async function connectBLE() {
 }
 
 function updateValue(event) {
-  const value = new TextDecoder().decode(event.target.value);
-  document.getElementById('value').textContent = `Valeur: ${value}`;
+  const value1 = new TextDecoder().decode(event.target.value1);
+  document.getElementById('value1').textContent = `Valeur2: ${value1}`;
+
+  const value2 = new TextDecoder().decode(event.target.value2);
+  document.getElementById('value2').textContent = `Valeur2: ${value2}`;
+
+  const value3 = new TextDecoder().decode(event.target.value3);
+  document.getElementById('value3').textContent = `Valeur3: ${value3}`;
+
+  const value4 = new TextDecoder().decode(event.target.value4);
+  document.getElementById('value4').textContent = `Valeur4: ${value4}`;
 }
 </script>
 </body>
