@@ -17,35 +17,35 @@
     <script>
         let bleDevice, bleCharacteristic;
 
-	async function connectBLE() {
-	    try {
-		bleDevice = await navigator.bluetooth.requestDevice({
-		    filters: [{ services: [SERVICE_UUID] }]
-		});
+async function connectBLE() {
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ services: ["12345678-1234-5678-1234-56789abcdef0"] }]
+        });
 
-		const server = await bleDevice.gatt.connect();
-		const service = await server.getPrimaryService(SERVICE_UUID);
-		bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
+        bleCharacteristic = await service.getCharacteristic("abcdef01-1234-5678-1234-56789abcdef0");
 
-		document.getElementById("status").textContent = "Statut: Connecté";
+        document.getElementById("status").textContent = "Statut: Connecté";
 
-		// Vérifie si les notifications sont supportées
-		if (bleCharacteristic.properties.notify) {
-		    bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
-		    await bleCharacteristic.startNotifications();
-		    console.log("Notifications BLE activées !");
-		} else {
-		    console.log("Les notifications ne sont pas supportées.");
-		}
-	    } catch (error) {
-		console.error("Erreur de connexion BLE:", error);
-	    }
-	}
+        if (bleCharacteristic.properties.notify) {
+            bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+            await bleCharacteristic.startNotifications();
+            console.log("Notifications BLE activées !");
+        } else {
+            console.log("Les notifications ne sont pas supportées.");
+        }
+    } catch (error) {
+        console.error("Erreur de connexion BLE:", error);
+    }
+}
 
-	function handleNotification(event) {
-	    let value = new TextDecoder().decode(event.target.value);
-	    document.getElementById("gpioValue").textContent = "Valeur GPIO: " + value;
-	    console.log("Donnée reçue:", value);
-	}</body>
+function handleNotification(event) {
+    let value = new TextDecoder().decode(event.target.value);
+    document.getElementById("gpioValue").textContent = "Valeur GPIO: " + value;
+    console.log("Donnée reçue:", value);
+}
+</body>
 </html>
 
