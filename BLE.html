@@ -6,31 +6,41 @@
   <p id="value">Valeur: 0</p>
 
 <script>
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 let characteristic;
 
 async function connectBLE() {
   try {
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ name: 'ESP32-S3_ANALOG' }],
-      optionalServices: [SERVICE_UUID]
+      filters: [{
+        services: [SERVICE_UUID],
+        namePrefix: 'ESP32' // Filtre plus large
+      }]
     });
     
     const server = await device.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
     characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
     
-    characteristic.addEventListener('characteristicvaluechanged', event => {
-      const value = new TextDecoder().decode(event.target.value);
-      document.getElementById('value').textContent = `Valeur: ${value}`;
+    characteristic.addEventListener('characteristicvaluechanged', updateValue);
+    await characteristic.startNotifications();
+    
+    // Gestion de la déconnexion
+    device.addEventListener('gattserverdisconnected', () => {
+      console.log('Déconnecté - Réinitialisation');
+      characteristic.removeEventListener('characteristicvaluechanged', updateValue);
     });
     
-    await characteristic.startNotifications();
   } catch(error) {
     console.error('Erreur:', error);
   }
 }
 
-const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+function updateValue(event) {
+  const value = new TextDecoder().decode(event.target.value);
+  document.getElementById('value').textContent = `Valeur: ${value}`;
+}
 </script>
 </body>
 </html>
