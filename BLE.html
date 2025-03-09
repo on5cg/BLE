@@ -3,55 +3,51 @@
 <body>
   <h1>ESP32 Analog Reader</h1>
   <button onclick="connectBLE()">Connexion BLE</button>
-  <p id="value1">Valeur1: 0</p>
-  <p id="value2">Valeur2: 0</p>
-  <p id="value3">Valeur3: 0</p>
-  <p id="value4">Valeur4: 0</p>
+  <p id="valueGPIO4">Valeur GPIO4: 0</p>
+  <p id="valueGPIO17">Valeur GPIO17: 0</p>
 
 <script>
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-let characteristic;
+const CHARACTERISTIC_UUID_GPIO4 = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+const CHARACTERISTIC_UUID_GPIO17 = 'd1b5483e-36e1-4688-b7f5-ea07361b26a9';
+
+let characteristicGPIO4;
+let characteristicGPIO17;
 
 async function connectBLE() {
   try {
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{
-        services: [SERVICE_UUID],
-        namePrefix: 'ESP32' // Filtre plus large
-      }]
+      filters: [{ services: [SERVICE_UUID] }]
     });
-    
+
     const server = await device.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
-    characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-    
-    characteristic.addEventListener('characteristicvaluechanged', updateValue);
-    await characteristic.startNotifications();
-    
-    // Gestion de la déconnexion
+
+    characteristicGPIO4 = await service.getCharacteristic(CHARACTERISTIC_UUID_GPIO4);
+    characteristicGPIO17 = await service.getCharacteristic(CHARACTERISTIC_UUID_GPIO17);
+
+    characteristicGPIO4.addEventListener('characteristicvaluechanged', event => {
+      const value = new TextDecoder().decode(event.target.value);
+      document.getElementById('valueGPIO4').textContent = `Valeur GPIO4: ${value}`;
+    });
+
+    characteristicGPIO17.addEventListener('characteristicvaluechanged', event => {
+      const value = new TextDecoder().decode(event.target.value);
+      document.getElementById('valueGPIO17').textContent = `Valeur GPIO17: ${value}`;
+    });
+
+    await characteristicGPIO4.startNotifications();
+    await characteristicGPIO17.startNotifications();
+
     device.addEventListener('gattserverdisconnected', () => {
       console.log('Déconnecté - Réinitialisation');
-      characteristic.removeEventListener('characteristicvaluechanged', updateValue);
+      characteristicGPIO4.removeEventListener('characteristicvaluechanged', updateValue);
+      characteristicGPIO17.removeEventListener('characteristicvaluechanged', updateValue);
     });
     
-  } catch(error) {
+  } catch (error) {
     console.error('Erreur:', error);
   }
-}
-
-function updateValue(event) {
-  const value1 = new TextDecoder().decode(event.target.value1);
-  document.getElementById('value1').textContent = `Valeur2: ${value1}`;
-
-  const value2 = new TextDecoder().decode(event.target.value2);
-  document.getElementById('value2').textContent = `Valeur2: ${value2}`;
-
-  const value3 = new TextDecoder().decode(event.target.value3);
-  document.getElementById('value3').textContent = `Valeur3: ${value3}`;
-
-  const value4 = new TextDecoder().decode(event.target.value4);
-  document.getElementById('value4').textContent = `Valeur4: ${value4}`;
 }
 </script>
 </body>
