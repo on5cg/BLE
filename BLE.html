@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <h1>ESP32 LDR Reader</h1>
+  <h1>ESP32 LDR Values</h1>
   <button onclick="connectBLE()">Connexion BLE</button>
-  <p id="value">Valeurs: </p>
+  <p id="ldr_nord">LDR_nord: -</p>
+  <p id="ldr_sud">LDR_sud: -</p>
+  <p id="ldr_est">LDR_est: -</p>
+  <p id="ldr_ouest">LDR_ouest: -</p>
 
 <script>
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -13,23 +16,19 @@ let characteristic;
 async function connectBLE() {
   try {
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{
-        services: [SERVICE_UUID],
-        namePrefix: 'ESP32' // Filtre plus large
-      }]
+      filters: [{ services: [SERVICE_UUID] }]
     });
     
     const server = await device.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
     characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
     
-    characteristic.addEventListener('characteristicvaluechanged', updateValue);
+    characteristic.addEventListener('characteristicvaluechanged', updateValues);
     await characteristic.startNotifications();
     
-    // Gestion de la déconnexion
     device.addEventListener('gattserverdisconnected', () => {
-      console.log('Déconnecté - Réinitialisation');
-      characteristic.removeEventListener('characteristicvaluechanged', updateValue);
+      console.log('Déconnecté');
+      characteristic.removeEventListener('characteristicvaluechanged', updateValues);
     });
     
   } catch(error) {
@@ -37,9 +36,15 @@ async function connectBLE() {
   }
 }
 
-function updateValue(event) {
+function updateValues(event) {
   const value = new TextDecoder().decode(event.target.value);
-  document.getElementById('value').textContent = `Valeurs: ${value}`;
+  
+  const data = value.split(',');
+  
+  document.getElementById('ldr_nord').textContent = data[0];
+  document.getElementById('ldr_sud').textContent = data[1];
+  document.getElementById('ldr_est').textContent = data[2];
+  document.getElementById('ldr_ouest').textContent = data[3];
 }
 </script>
 </body>
