@@ -1,51 +1,37 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>ESP32 BLE</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        button { font-size: 20px; padding: 10px; }
-    </style>
-</head>
+<html>
 <body>
-    <h1>ESP32 BLE</h1>
-    <button onclick="connectBLE()">Se connecter</button>
-    <p id="status">Statut: Déconnecté</p>
-    <p id="gpioValue">Valeur GPIO: --</p>
+  <h1>ESP32 Analog Reader</h1>
+  <button onclick="connectBLE()">Connexion BLE</button>
+  <p id="value">Valeur: 0</p>
 
-    <script>
-        let bleDevice, bleCharacteristic;
+<script>
+let characteristic;
 
 async function connectBLE() {
-    try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ services: ["12345678-1234-5678-1234-56789abcdef0"] }]
-        });
-
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
-        bleCharacteristic = await service.getCharacteristic("abcdef01-1234-5678-1234-56789abcdef0");
-
-        document.getElementById("status").textContent = "Statut: Connecté";
-
-        if (bleCharacteristic.properties.notify) {
-            bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
-            await bleCharacteristic.startNotifications();
-            console.log("Notifications BLE activées !");
-        } else {
-            console.log("Les notifications ne sont pas supportées.");
-        }
-    } catch (error) {
-        console.error("Erreur de connexion BLE:", error);
-    }
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'ESP32-S3_ANALOG' }],
+      optionalServices: [SERVICE_UUID]
+    });
+    
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+    
+    characteristic.addEventListener('characteristicvaluechanged', event => {
+      const value = new TextDecoder().decode(event.target.value);
+      document.getElementById('value').textContent = `Valeur: ${value}`;
+    });
+    
+    await characteristic.startNotifications();
+  } catch(error) {
+    console.error('Erreur:', error);
+  }
 }
 
-function handleNotification(event) {
-    let value = new TextDecoder().decode(event.target.value);
-    document.getElementById("gpioValue").textContent = "Valeur GPIO: " + value;
-    console.log("Donnée reçue:", value);
-}
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+</script>
 </body>
 </html>
 
