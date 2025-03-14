@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <h1>ESP32 LDR Values</h1>
+  <h1>Cellule solaire</h1>
   <button onclick="connectBLE()">Connexion BLE</button>
   <p id="ldr_nord">LDR_nord: -</p>
   <p id="ldr_sud">LDR_sud: -</p>
   <p id="ldr_est">LDR_est: -</p>
   <p id="ldr_ouest">LDR_ouest: -</p>
+
+  <p id="">---------------</p>
+
+  <p id="NS__">NS___: -</p>
+  <p id="EO__">EO___: -</p>
 
 <script>
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -45,6 +50,9 @@ function updateValues(event) {
   document.getElementById('ldr_sud').textContent = data[1];
   document.getElementById('ldr_est').textContent = data[2];
   document.getElementById('ldr_ouest').textContent = data[3];
+  document.getElementById('NS___').textContent = data[4];
+  document.getElementById('lEO___').textContent = data[5];
+  
 }
 </script>
 </body>
